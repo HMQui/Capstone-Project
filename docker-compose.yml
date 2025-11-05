@@ -1,32 +1,33 @@
 version: '3.8'
 
 services:
-  # Service 1: API (Express) 
+  # Service 1: API (Express)
   api:
     build: ./api
     # Không cần 'ports' vì chỉ Envoy mới nói chuyện với nó
 
-  # Service 2: Client (React) 
+  # Service 2: Client (React)
   client:
     build: ./client
     ports:
       - "3000:80" # Ánh xạ cổng 80 (Nginx) sang 3000
 
-  # Service 3: Keycloak (Identity Provider) [cite: 45]
+  # Service 3: Keycloak (Identity Provider)
   keycloak:
     image: quay.io/keycloak/keycloak:22.0.5
     command: start-dev
     environment:
+      # Sửa lỗi chính tả ở đây
       - KEYCLOAK_ADMIN=admin       # User admin
       - KEYCLOAK_ADMIN_PASSWORD=admin # Mật khẩu admin
     ports:
       - "8080:8080" # Ánh xạ cổng 8080
 
-  # Service 4: Envoy (Proxy) [cite: 51]
+  # Service 4: Envoy (Proxy)
   envoy:
     image: envoyproxy/envoy:v1.27.0
     ports:
-      - [cite_start]"10000:10000" # Cổng chính cho React gọi vào 
+      - "10000:10000" # Cổng chính cho React gọi vào
       - "9901:9901"   # Cổng admin của Envoy
     volumes:
       - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml
