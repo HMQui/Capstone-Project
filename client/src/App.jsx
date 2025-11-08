@@ -1,22 +1,65 @@
 import { useState, useEffect } from "react";
-import "./App.css";
+import userManager from "./config/authConfig.js";
+import api from "./config/axiosConfig.js";
 
 function App() {
   const [message, setMessage] = useState("");
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    fetch("http://localhost:10000/api/data")
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch((err) => console.error("Lỗi khi gọi API: ", err));
+    userManager.getUser().then((user) => {
+      if (user) {
+        setUser(user);
+        console.log("Access Token:", user.access_token);
+      }
+    });
   }, []);
 
+  const handleLogin = () => {
+    userManager.signinRedirect();
+  };
+
+  const handleLogout = () => {
+    userManager.signoutRedirect();
+  };
+
+  const handleFetchApi = async () => {
+    if (!user) {
+      alert("Bạn cần đăng nhập trước!");
+      return;
+    }
+
+    const data = await api.get("/api/data");
+
+    console.log(data);
+    
+    setMessage(data.data.message);
+  };
+
+  if (window.location.pathname === "/callback") {
+    userManager.signinRedirectCallback().then((user) => {
+      window.location.href = "/";
+    });
+    return <p>Đang đăng nhập...</p>;
+  }
+  console.log(user);
+  
   return (
     <div className="App">
       <header className="App-header">
+        {user ? (
+          <div>
+            <p>Xin chào, {user.profile.preferred_username}</p>
+            <button onClick={handleLogout}>Đăng xuất</button>
+            <button onClick={handleFetchApi}>Gọi API (Test DPoP)</button>
+          </div>
+        ) : (
+          <button onClick={handleLogin}>Đăng nhập với Keycloak</button>
+        )}
         <p>Data từ server: {message || "Đang tải..."}</p>
       </header>
     </div>
   );
 }
+
 export default App;

@@ -17,22 +17,21 @@ static_resources:
                   virtual_hosts:
                     - name: backend
                       domains: ["*"]
+                      cors:
+                        allow_origin_string_match:
+                          - prefix: "http://localhost:3000"
+                        allow_headers: "Authorization,DPoP,Content-Type"
+                        allow_methods: "GET,POST,OPTIONS"
+                        allow_credentials: true
                       routes:
                         - match:
                             prefix: "/"
                           route:
                             cluster: backend_service
                 http_filters:
-                  # === HTTPS ExtAuthz ===
-                  # - name: envoy.filters.http.ext_authz
-                  #   typed_config:
-                  #     "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
-                  #     transport_api_version: V3
-                  #     grpc_service:
-                  #       envoy_grpc:
-                  #         cluster_name: ext_authz
-                  #       timeout: 0.25s
-                  # === HTTP ExtAuthz ===
+                  - name: envoy.filters.http.cors
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors
                   - name: envoy.filters.http.ext_authz
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
@@ -49,6 +48,11 @@ static_resources:
                               - exact: "authorization"
                               - exact: "cookie"
                               - exact: "dpop"
+                          headers_to_add:
+                              - key: "x-envoy-original-method"
+                                value: "%REQ(:METHOD)%"
+                              - key: "x-envoy-original-path"
+                                value: "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%"
                   - name: envoy.filters.http.router
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
@@ -80,16 +84,3 @@ static_resources:
                     socket_address:
                       address: api 
                       port_value: 3001
-    # - name: ext_authz
-    #   connect_timeout: 0.25s
-    #   type: STRICT_DNS
-    #   lb_policy: ROUND_ROBIN
-    #   load_assignment:
-    #     cluster_name: ext_authz
-    #     endpoints:
-    #       - lb_endpoints:
-    #           - endpoint:
-    #               address:
-    #                 socket_address:
-    #                   address: ext_authz
-    #                   port_value: 50051

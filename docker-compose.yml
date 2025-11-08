@@ -14,7 +14,7 @@ services:
 
   # Service 3: Keycloak (Identity Provider)
   keycloak:
-    image: quay.io/keycloak/keycloak:22.0.5
+    image: quay.io/keycloak/keycloak:26.4.0
     command: start-dev
     environment:
       # Sửa lỗi chính tả ở đây
