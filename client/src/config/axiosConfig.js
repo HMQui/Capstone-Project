@@ -8,8 +8,14 @@ const api = axios.create({
 api.interceptors.request.use(
     async (config) => {
         const user = await userManager.getUser();
+        const url = new URL(config.url, api.defaults.baseURL);
+        const method = (config.method || 'get').toUpperCase();
+
         if (user && user.access_token) {
-            const dpopProof = await userManager.dpopProof();
+            const dpopProof = await userManager.dpopProof({
+                url: url.href,
+                httpMethod: method,
+            });
 
             config.headers['Authorization'] = `DPoP ${user.access_token}`;
             config.headers['DPoP'] = dpopProof;

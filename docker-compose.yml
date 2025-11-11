@@ -31,3 +31,20 @@ services:
       - "9901:9901"   # Cổng admin của Envoy
     volumes:
       - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml
+  # Service 5: Vault (PKI - Certificate Authority)
+  vault:
+    image: hashicorp/vault:1.15.0
+    ports:
+      - "8200:8200" # Cổng UI và API của Vault
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=root 
+      - VAULT_ADDR=http://127.0.0.1:8200
+    volumes:
+      - vault-data:/vault/file # Lưu trữ dữ liệu vault để không bị mất khi restart
+    # Yêu cầu quyền để "khóa" bộ nhớ, cần thiết cho Vault
+    cap_add:
+      - IPC_LOCK
+
+# Thêm volume ở cuối file
+volumes:
+  vault-data:
